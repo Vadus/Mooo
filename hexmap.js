@@ -182,7 +182,7 @@ hexmap.selectHexmap = function(e) {
     }
     else if ((unit === undefined || unit === null) && hexmap.selectedUnit !== null){ //selected hexagon is empty but a unit is currently selected
     
-        var h_moveTo = hexmap.selectedUnit.isReadyToMoveTo;
+        var h_moveTo = hexmap.selectedUnit.readyToMoveTo;
 
         if(h_moveTo !== undefined && h_moveTo !== null){
             if(h_moveTo.x == hx && h_moveTo.y == hy){
@@ -191,12 +191,17 @@ hexmap.selectHexmap = function(e) {
             }
         }
     }
-    else if (unit !== undefined && unit !== null && hexmap.selectedUnit !== null){
+    else if(unit !== undefined && unit !== null && hexmap.selectedUnit !== null){
         
-        var attackedUnit = hexmap.selectedUnit.readyToAttack;
-        if(attackedUnit !== undefined && attackedUnit !== null
-        && hexmap.selectedUnit.id != attackedUnit.id){
-            hexmap._attackUnit(hexmap.selectedUnit, attackedUnit);
+        if(unit.id == hexmap.selectedUnit.id){
+            hexmap.selectedUnit.readyToMoveTo = null;
+        }
+        else{
+            var attackedUnit = hexmap.selectedUnit.readyToAttack;
+            if(attackedUnit !== undefined && attackedUnit !== null
+            && hexmap.selectedUnit.id != attackedUnit.id){
+                hexmap._attackUnit(hexmap.selectedUnit, attackedUnit);
+            }
         }
     }
     
@@ -207,12 +212,12 @@ hexmap.selectHexmap = function(e) {
         
         if(hexmap.selectedUnit !== null && hexmap.selectedUnit.id != unit.id){
             
-            hexmap._drawAttackLine(hexmap.selectedUnit, unit);
+            hexmap._prepareAttack(hexmap.selectedUnit, unit);
         }
     }
     else if (hexmap.selectedUnit !== null){ //selected hexagon is empty but a unit is currently selected
     
-        hexmap._drawMovementLine(hx, hy);
+        hexmap._prepareMove(hx, hy);
     }
 }
 
@@ -225,7 +230,7 @@ hexmap._attackUnit = function(unitAttack, unitDefend){
     delete hexmap.units[defenderKey];
     
     unitAttack.readyToAttack = null;
-    hexmap._moveUnit(unitAttack, hx, hx);
+    hexmap._moveUnit(unitAttack, hx, hy);
 }
 
 hexmap._moveUnit = function(unit, hx, hy){
@@ -240,7 +245,7 @@ hexmap._moveUnit = function(unit, hx, hy){
     delete hexmap.units[unitKey];
 }
 
-hexmap._drawAttackLine = function(unitAttack, unitDefend){
+hexmap._prepareAttack = function(unitAttack, unitDefend){
     
     var aCenter = hexmap._getHexagonCenter(unitAttack.x, unitAttack.y);
     var dCenter = hexmap._getHexagonCenter(unitDefend.x, unitDefend.y);
@@ -254,11 +259,21 @@ hexmap._drawAttackLine = function(unitAttack, unitDefend){
     unitAttack.readyToAttack = unitDefend;
 }
 
-hexmap._drawMovementLine = function(hx, hy){
+hexmap._prepareMove = function(hx, hy){
     
-    var h_moveTo = hexmap.selectedUnit.isReadyToMoveTo;
+    var h_moveTo = hexmap.selectedUnit.readyToMoveTo;
 
     if(h_moveTo === undefined || h_moveTo === null || h_moveTo.x != hx || h_moveTo.y != hy){
+        
+        /*
+        if( h_moveTo !== undefined && h_moveTo !== null &&
+            hexmap.selectedUnit.x == h_moveTo.x && hexmap.selectedUnit.y == h_moveTo.y){
+            //the move is prepared to the units location, means to remove preparation
+            hexmap.selectedUnit.readyToMoveTo = null;
+            return;
+        }
+        */
+        
         //movement line from selectedUnit to empty hexagon
         
         var uCenter = hexmap._getHexagonCenter(hexmap.selectedUnit.x, hexmap.selectedUnit.y);
@@ -271,11 +286,11 @@ hexmap._drawMovementLine = function(hx, hy){
         hexmap.context.stroke();
         
         if(h_moveTo === undefined || h_moveTo === null){
-            hexmap.selectedUnit.isReadyToMoveTo = { x: hx, y: hy };
+            hexmap.selectedUnit.readyToMoveTo = { x: hx, y: hy };
         }
         else{
-            hexmap.selectedUnit.isReadyToMoveTo.x = hx;
-            hexmap.selectedUnit.isReadyToMoveTo.y = hy;
+            hexmap.selectedUnit.readyToMoveTo.x = hx;
+            hexmap.selectedUnit.readyToMoveTo.y = hy;
         }
     }
 }
