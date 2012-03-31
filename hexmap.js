@@ -257,6 +257,7 @@ hexmap._prepareAttack = function(unitAttack, unitDefend){
     hexmap.context.stroke();
     
     unitAttack.readyToAttack = unitDefend;
+    unitAttack.readyToMoveTo = null;
 }
 
 hexmap._prepareMove = function(hx, hy){
