@@ -1,0 +1,31 @@
+<html>
+<head>
+    <script src="hexmap.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    	var hexmap_params = {
+				hexmap_canvas_id : 'hexmapContainer',
+				hexmap_x_size : 10,
+				hexmap_y_size : 8,
+				hexmap_hex_size : 50,
+				hexmap_color_normal :  '#aaa',
+				hexmap_color_hover : '#000',
+				hexmap_color_selected : '#8ee8a6',
+				hexmap_info_div : 'hex_pos'
+		};
+
+	</script>
+</head>
+<body>
+    <div id="hex_pos">Move your mouse</div>
+    <div>
+        <canvas id="hexmapContainer" width="1024" height="768"></canvas>
+    	<script type="text/javascript">
+    		<!--
+    		var units = {
+                "1,1": {"image": "http://sandbox.yoyogames.com/extras/image/name/san2/95/387095/thumb/2241Spaceship.jpeg"}
+                };
+    		hexmap.init(hexmap_params, units);
+    		-->
+    	</script>
+    </div>
+</body>
