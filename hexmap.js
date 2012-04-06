@@ -77,7 +77,9 @@ hexmap.draw = function() {
     // position and drawing hexagons
     for (var hx = 0; hx < hexmap.h_x_range; hx += 1) {
         my = 0;
-        hexmap.h_list[hx] = [];
+        if(hexmap.h_list[hx] === undefined){
+            hexmap.h_list[hx] = [];
+        }
 
         for (var hy = 0; hy < hexmap.h_y_range; hy += 1) {
         	// checking hover
@@ -91,16 +93,32 @@ hexmap.draw = function() {
                 is_selected = true;
             } else {
                 is_selected = false;
-            }            	
+            }
+            // set hexagon inRange of a selected unit also as selected
+            if(hexmap.selectedUnit !== undefined && hexmap.selectedUnit !== null
+                && hexmap.h_list[hx][hy] !== undefined
+                && hexmap.h_list[hx][hy].inRange !== undefined
+                && hexmap.h_list[hx][hy].inRange == true){
+                is_selected = true;
+            }
+            
+            // adding to hexagon list
+            if(hexmap.h_list[hx][hy] === undefined){
+                hexmap.h_list[hx][hy] = {
+                    	mx : mx,
+                        my : my,
+                };
+            }
+            else{
+                hexmap.h_list[hx][hy].mx = mx;
+                hexmap.h_list[hx][hy].my = my;
+            }
+            
+            
+            
             // drawing hexagon
             //hexmap._log("drawing hexagon at " + hx + ", " + hy);
             hexmap._drawHexagon(mx,my,is_hovered,is_selected);
-            
-            // adding to hexagon list
-            hexmap.h_list[hx][hy] = {
-                	mx : mx,
-                    my : my,
-            };
             
             // drawing unit at hexagon
         	var unit = hexmap.units[hx + "," + hy];
@@ -109,7 +127,8 @@ hexmap.draw = function() {
         	    hexmap._drawUnit(mx, my, unit, is_hovered,is_selected);
         	}
             
-            
+            //drawing hexagon position
+            hexmap._drawHexagonPosition(hx, hy);
             
             // switch top/bottom hexagon
             if(hex_bottom_right == 1) {
@@ -178,6 +197,7 @@ hexmap.selectHexmap = function(e) {
     if(unit !== undefined && unit !== null && hexmap.selectedUnit === null){
         
         hexmap.selectedUnit = unit;
+        hexmap._setupRange(hx, hy, unit.range);
         hexmap._log("Selected unit " + unit.id);
     }
     else if ((unit === undefined || unit === null) && hexmap.selectedUnit !== null){ //selected hexagon is empty but a unit is currently selected
@@ -364,6 +384,7 @@ hexmap._drawHexagon = function(x,y,is_hovered,is_selected) {
 	hexmap.context.lineTo(x, y+hexmap.h_h+hexmap.h_size);
 	hexmap.context.lineTo(x, y+hexmap.h_h);
 	hexmap.context.lineTo(x+hexmap.h_r, y);
+    
     // change color if selected
     if(is_selected == true){
         hexmap.context.fillStyle = hexmap.h_color_selected;
@@ -387,6 +408,16 @@ hexmap._drawHexagon = function(x,y,is_hovered,is_selected) {
 	}
 }
 
+hexmap._drawHexagonPosition = function(hx,hy){
+    
+    //draw hex position
+    hexmap.context.strokeStyle = '#000';
+    hexmap.context.font = '30px';
+    var textPos = hexmap._getHexagonCenter(hx, hy);
+    hexmap.context.strokeText(hx+','+hy, textPos.x, textPos.y);
+    //hexmap._log('Draw Text for hexagon '+hx+','+hy+' at '+ textPos.x+','+ textPos.y);
+}
+
 hexmap._drawUnit = function(mx,my,unit,is_hovered) {
 	
     var ux = mx + hexmap.h_size / 2;
@@ -407,6 +438,76 @@ hexmap._drawUnit = function(mx,my,unit,is_hovered) {
     
     unit.ux = ux;
     unit.uy = uy;
+}
+
+/*                              bei y = ungerade                                bei y = gerade
+Range 1    			Alle x von x - (r-1) bis x + r                        Alle x von x - r bis x + (r-1)
+                                 und y von y - r bis y + r                 und y von y - r bis y + r
+         x,y-1   x+1,y-1         zusätzlich x-r,y                   zusätzlich x+r,y
+
+    x-1,y    x,y      x+1,y
+
+         x,y+1   x+1,y+1
+
+
+Range 2
+
+             x-1,y-2   x,y-2    x+1,y-2   
+
+         x-1,y-1   x,y-1   x+1,y-1    x+2,y-1
+
+     x-2,y    x-1,y    x,y      x+1,y     x+2,y
+ 
+         x-1,y+1   x,y+1   x+1,y+1  x+2,y+1
+
+              x-1,y+2  x,y+2   x+1,y+2         
+*/
+hexmap._setupRange = function(centerX, centerY, range){
+    hexmap._log('setup range ' + range);
+    var rangeFromX = centerX - (range - 1);
+    if(centerY % 2 == 0){
+        rangeFromX = centerX - range;
+    }
+    if(rangeFromX < 0){
+        rangeFromX = 0;
+    }
+    var rangeUntilX  = centerX + range;
+    if(centerY % 2 == 0){
+        rangeUntilX  = centerX + (range-1);
+    }
+    if(rangeUntilX >= hexmap.h_x_range){
+        rangeUntilX = hexmap.h_x_range - 1;
+    }
+    var rangeFromY = centerY - range;
+    if(rangeFromY < 0){
+        rangeFromY = 0;
+    }
+    var rangeUntilY = centerY + range;
+    if(rangeUntilY >= hexmap.h_y_range){
+        rangeUntilY = hexmap.h_y_range - 1;
+    }
+    var outerX = centerX - range;
+    if(centerY % 2 == 0){
+        outerX = centerX + range;
+    }
+    if(outerX < 0){
+        outerX = 0;
+    }
+    for (var hx = 0; hx < hexmap.h_x_range; hx += 1) {
+        for (var hy = 0; hy < hexmap.h_y_range; hy += 1) {
+            //hexmap._log('check range for ' + hx + ',' + hy);
+            if((hx >= rangeFromX && hx <= rangeUntilX
+             && hy >= rangeFromY && hy <= rangeUntilY)
+            || hx == outerX && hy == centerY){
+                hexmap._log('in range: ' + hx + ',' + hy);
+                hexmap.h_list[hx][hy].inRange = true;
+            }
+            else{
+                hexmap.h_list[hx][hy].inRange = false;
+            }
+            
+        }
+    }
 }
 
 hexmap._log = function(message) {
