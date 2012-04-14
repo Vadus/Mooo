@@ -440,44 +440,44 @@ hexmap._drawUnit = function(mx,my,unit,is_hovered) {
     unit.uy = uy;
 }
 
-/*                              bei y = ungerade                                bei y = gerade
-Range 1    			Alle x von x - (r-1) bis x + r                        Alle x von x - r bis x + (r-1)
-                                 und y von y - r bis y + r                 und y von y - r bis y + r
-         x,y-1   x+1,y-1         zusätzlich x-r,y                   zusätzlich x+r,y
+/*                              
+Range 1    			
+                                 
+         x,y-1   x+1,y-1
 
     x-1,y    x,y      x+1,y
 
          x,y+1   x+1,y+1
 
 
-Range 2
-
-             x-1,y-2   x,y-2    x+1,y-2   
-
-         x-1,y-1   x,y-1   x+1,y-1    x+2,y-1
-
-     x-2,y    x-1,y    x,y      x+1,y     x+2,y
- 
-         x-1,y+1   x,y+1   x+1,y+1  x+2,y+1
+Range 2,  y = uneven                                           Range 3 - upper half, y = uneven                                            Range 3 - upper half, y = even
+                                                                                                                                                                                                        
+             x-1,y-2   x,y-2    x+1,y-2                                     x-1,y-3  x,y-3   x+1,y-3   x+2,y-2                                      x-2,y-3  x-1,y-3   x,y-3   x+1,y-2
+                                                                                                                                                                                                        
+         x-1,y-1   x,y-1   x+1,y-1    x+2,y-1                           x-2,y-2   x-1,y-2  x,y-2   x+1,y-2   x+2,y-2                            x-2,y-2   x-1,y-2  x,y-2   x+1,y-2   x+2,y-2
+                                                                                                                                                                                                        
+     x-2,y    x-1,y    x,y      x+1,y     x+2,y                     x-2,y-1   x-1,y-1   x,y-1  x+1,y-1   x+2,y-1   x+3,y-1                  x-3,y-1   x-2,y-1   x-1,y-1  x,y-1   x+1,y-1   x+2,y-1  
+                                                                                                                                                                                                        
+         x-1,y+1   x,y+1   x+1,y+1  x+2,y+1                     x-3,y     x-2,y     x-1,y    x,y     x+1,y     x+2,y     x+3,y          x-3,y     x-2,y     x-1,y    x,y     x+1,y     x+2,y     x+3,y
 
               x-1,y+2  x,y+2   x+1,y+2         
+
+Range 2, distance 2: x-1    x+1		x-(d/2+(r-d))	x+(d/2+(r-d))
+
+Range 3, distance 2: x-2	x+2		x-(d/2+(r-d))	x+(d/2+(r-d))
+
+Range 4, distance 2: x-3	x+3		x-(d/2+(r-d))	x+(d/2+(r-d))			
+Range 4, distance 4: x-2	x+2		x-(d/2+(r-d))	x+(d/2+(r-d))
+
+Range 5, distance 2: x-4	x+4		x-(d/2+(r-d))	x+(d/2+(r-d))
+Range 5, distance 4: x-3	x+3		x-(d/2+(r-d))	x+(d/2+(r-d))
+
+Range 6, distance 2: x-5	x+5		x-(d/2+(r-d))	x+(d/2+(r-d))
+Range 6, distance 4: x-4	x+4		x-(d/2+(r-d)) 	x+(d/2+(r-d))
+Range 6, distance 6: x-3	x+3		x-(d/2+(r-d))	x+(d/2+(r-d))	
+
 */
 hexmap._setupRange = function(centerX, centerY, range){
-    hexmap._log('setup range ' + range);
-    var rangeFromX = centerX - (range - 1);
-    if(centerY % 2 == 0){
-        rangeFromX = centerX - range;
-    }
-    if(rangeFromX < 0){
-        rangeFromX = 0;
-    }
-    var rangeUntilX  = centerX + range;
-    if(centerY % 2 == 0){
-        rangeUntilX  = centerX + (range-1);
-    }
-    if(rangeUntilX >= hexmap.h_x_range){
-        rangeUntilX = hexmap.h_x_range - 1;
-    }
     var rangeFromY = centerY - range;
     if(rangeFromY < 0){
         rangeFromY = 0;
@@ -486,26 +486,37 @@ hexmap._setupRange = function(centerX, centerY, range){
     if(rangeUntilY >= hexmap.h_y_range){
         rangeUntilY = hexmap.h_y_range - 1;
     }
-    var outerX = centerX - range;
-    if(centerY % 2 == 0){
-        outerX = centerX + range;
-    }
-    if(outerX < 0){
-        outerX = 0;
-    }
+    
     for (var hx = 0; hx < hexmap.h_x_range; hx += 1) {
         for (var hy = 0; hy < hexmap.h_y_range; hy += 1) {
             //hexmap._log('check range for ' + hx + ',' + hy);
-            if((hx >= rangeFromX && hx <= rangeUntilX
-             && hy >= rangeFromY && hy <= rangeUntilY)
-            || hx == outerX && hy == centerY){
-                hexmap._log('in range: ' + hx + ',' + hy);
+            var distanceY = hy - centerY;
+            if(distanceY < 0){
+                distanceY = distanceY * -1;
+            }
+            
+            var xRange = (distanceY/2 + (range - distanceY));
+            var rangeFromX = centerX - xRange;
+            var rangeUntilX = centerX + xRange;
+            if(distanceY % 2 != 0){
+                //uneven distance, here we have to round depending on the centerY
+                if(centerY % 2 == 0){
+                    rangeFromX = Math.floor(rangeFromX);
+                    rangeUntilX = Math.floor(rangeUntilX);
+                }
+                else{
+                    rangeFromX = Math.ceil(rangeFromX);
+                    rangeUntilX = Math.ceil(rangeUntilX);
+                }
+            }
+            
+            if(hy >= rangeFromY && hy <= rangeUntilY && hx >= rangeFromX && hx <= rangeUntilX){
+                //hexmap._log('in range: ' + hx + ',' + hy + ", distanceY=" + distanceY + ", xRange = " + xRange + ", rangeFromX = " + rangeFromX + ", rangeUntilX = " + rangeUntilX);  
                 hexmap.h_list[hx][hy].inRange = true;
             }
             else{
                 hexmap.h_list[hx][hy].inRange = false;
             }
-            
         }
     }
 }
